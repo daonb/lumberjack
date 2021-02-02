@@ -108,7 +108,8 @@ type Logger struct {
 	Compress bool `json:"compress" yaml:"compress"`
 
 	size int64
-	file *os.File
+	// File hold a pointer to the logger's file
+	File *os.File
 	mu   sync.Mutex
 
 	millCh    chan bool
@@ -143,7 +144,7 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 		)
 	}
 
-	if l.file == nil {
+	if l.File == nil {
 		if err = l.openExistingOrNew(len(p)); err != nil {
 			return 0, err
 		}
@@ -155,7 +156,7 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 		}
 	}
 
-	n, err = l.file.Write(p)
+	n, err = l.File.Write(p)
 	l.size += int64(n)
 
 	return n, err
@@ -170,11 +171,11 @@ func (l *Logger) Close() error {
 
 // close closes the file if it is open.
 func (l *Logger) close() error {
-	if l.file == nil {
+	if l.File == nil {
 		return nil
 	}
-	err := l.file.Close()
-	l.file = nil
+	err := l.File.Close()
+	l.File = nil
 	return err
 }
 
@@ -236,7 +237,7 @@ func (l *Logger) openNew() error {
 	if err != nil {
 		return fmt.Errorf("can't open new logfile: %s", err)
 	}
-	l.file = f
+	l.File = f
 	l.size = 0
 	return nil
 }
@@ -283,7 +284,7 @@ func (l *Logger) openExistingOrNew(writeLen int) error {
 		// it and open a new log file.
 		return l.openNew()
 	}
-	l.file = file
+	l.File = file
 	l.size = info.Size()
 	return nil
 }
